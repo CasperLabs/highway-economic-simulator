@@ -1,0 +1,5 @@
+.*
+highway_economic_simulator.egg-info/
+__pycache__/
+\#*
+*\#
