@@ -156,7 +156,6 @@ class EraState:
                     //(total_weight - q_OTF)**EF_REWARD_PARAM
                 ef_reward = allocated_ef_reward*f_ef
 
-            # import ipdb; ipdb.set_trace()
             round_.set_final_rewards(otf_reward, ef_reward)
 
             # Distribute OTF rewards
