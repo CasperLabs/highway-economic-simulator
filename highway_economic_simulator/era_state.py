@@ -17,11 +17,29 @@ class EraState:
     def __init__(
             self,
             initial_supply: uint64,
+            seigniorage_rate=ERA_SEIGNIORAGE_RATE,
+            fault_tolerance_threshold=FAULT_TOLERANCE_THRESHOLD,
+            reward_weight_alpha=REWARD_WEIGHT_ALPHA,
+            reward_weight_beta=REWARD_WEIGHT_BETA,
+            reward_weight_gamma=REWARD_WEIGHT_GAMMA,
+            ef_reward_delta=EF_REWARD_DELTA,
+            underestimation_tolerance=UNDERESTIMATION_TOLERANCE,
+            otf_ratio=OTF_RATIO,
     ):
         self.validators = []
         self.announced_round_exponents_dict = {}
         self.rounds_dict = OrderedDict()
         self.initial_supply = initial_supply
+
+        self.fault_tolerance_threshold = FAULT_TOLERANCE_THRESHOLD
+        self.seigniorage_rate = ERA_SEIGNIORAGE_RATE
+
+        self.reward_weight_alpha=REWARD_WEIGHT_ALPHA
+        self.reward_weight_beta=REWARD_WEIGHT_BETA
+        self.reward_weight_gamma=REWARD_WEIGHT_GAMMA
+        self.ef_reward_delta=EF_REWARD_DELTA
+        self.underestimation_tolerance=UNDERESTIMATION_TOLERANCE
+        self.otf_ratio=OTF_RATIO
 
         self.latest_tick = 0
 
@@ -71,10 +89,10 @@ class EraState:
             assigned_weight = round_.get_assigned_weight()
             if assigned_weight >= q_OTF:
                 reward_weight = (
-                    REWARD_WEIGHT_PARAM_1*assigned_weight
-                    + (1 - REWARD_WEIGHT_PARAM_1)*REWARD_WEIGHT_PARAM_2
-                    - REWARD_WEIGHT_PARAM_2*q_OTF
-                )**REWARD_WEIGHT_PARAM_3
+                    self.reward_weight_alpha*assigned_weight
+                    + (1 - self.reward_weight_alpha)*self.reward_weight_beta
+                    - self.reward_weight_beta*q_OTF
+                )**self.reward_weight_gamma
             else:
                 round_.set_insufficient_weight(True)
                 reward_weight = 0
@@ -98,13 +116,13 @@ class EraState:
                 if round_.insufficient_weight:
                     counter += 1
 
-                if counter >= UNDERESTIMATE_PARAM:
+                if counter >= self.underestimation_tolerance:
                     punishment = True
 
     def distribute_rewards(self):
         # Calculate relevant quantities
         total_weight = get_total_weight(self.validators)
-        q_OTF = calculate_q_otf(total_weight, FAULT_TOLERANCE_THRESHOLD)
+        q_OTF = calculate_q_otf(total_weight, self.fault_tolerance_threshold)
 
         self.generate_rounds()
         self.calculate_reward_weights(q_OTF)
@@ -150,10 +168,10 @@ class EraState:
                 otf_reward = 0
                 ef_reward = 0
             else:
-                otf_reward = round_reward*EPSILON
+                otf_reward = round_reward*self.otf_ratio
                 allocated_ef_reward = round_reward - otf_reward
-                f_ef = (round_.eventual_contributing_weight - q_OTF)**EF_REWARD_PARAM \
-                    //(total_weight - q_OTF)**EF_REWARD_PARAM
+                f_ef = (round_.eventual_contributing_weight - q_OTF)**self.ef_reward_delta \
+                    //(total_weight - q_OTF)**self.ef_reward_delta
                 ef_reward = allocated_ef_reward*f_ef
 
             round_.set_final_rewards(otf_reward, ef_reward)
@@ -175,7 +193,7 @@ class EraState:
         # print('Difference:', total_reward - sum([v.balance for v in self.validators]))
 
     def get_total_era_reward(self) -> uint64:
-        return self.initial_supply*ERA_SEIGNIORAGE_RATE
+        return self.initial_supply*self.seigniorage_rate
 
     def output_result(self):
         result = ''
