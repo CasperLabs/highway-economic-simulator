@@ -9,7 +9,6 @@ from .constants import *
 
 class EraState:
     validators: List['ValidatorBase']
-    announced_round_exponents_dict: Dict['ValidatorBase', List[uint64]]
     latest_tick: uint64
     initial_supply: uint64
     rounds_dict: Dict[uint64, Round]
@@ -27,13 +26,11 @@ class EraState:
             otf_ratio=OTF_RATIO,
     ):
         self.validators = []
-        self.announced_round_exponents_dict = {}
         self.rounds_dict = OrderedDict()
         self.initial_supply = initial_supply
 
         self.fault_tolerance_threshold = FAULT_TOLERANCE_THRESHOLD
         self.seigniorage_rate = ERA_SEIGNIORAGE_RATE
-
         self.reward_weight_alpha=REWARD_WEIGHT_ALPHA
         self.reward_weight_beta=REWARD_WEIGHT_BETA
         self.reward_weight_gamma=REWARD_WEIGHT_GAMMA
@@ -45,7 +42,6 @@ class EraState:
 
     def add_validator(self, validator: 'ValidatorBase'):
         self.validators.append(validator)
-        self.announced_round_exponents_dict[validator] = []
 
     def add_validators(self, validators: List['ValidatorBase']):
         for v in validators:
@@ -53,7 +49,7 @@ class EraState:
 
     def next_tick(self):
         for v in self.validators:
-            self.announced_round_exponents_dict[v].append(v.announce_round_exponent(self))
+            v.announce_round_exponent(self)
 
         self.latest_tick += 1
 
@@ -63,7 +59,7 @@ class EraState:
         self.round_beginning_ticks_dict: Dict[Validator, List[uint64]] = {}
         for v in self.validators:
             self.round_beginning_ticks_dict[v] = get_round_beginning_ticks(
-                self.announced_round_exponents_dict[v])
+                v.announced_round_exponents)
 
         # Get a list containing all ticks which a round begins at
         self.round_beginning_ticks: List[uint64] = []
@@ -76,7 +72,7 @@ class EraState:
             assigned_validators = [v for v in self.validators \
                                    if tick in self.round_beginning_ticks_dict[v]]
             round_exponents_dict = \
-                {v:self.announced_round_exponents_dict[v][tick] for v in assigned_validators}
+                {v:v.announced_round_exponents[tick] for v in assigned_validators}
 
             self.rounds_dict[tick] = Round(
                 tick,

@@ -34,7 +34,9 @@ setup(
     # packages=find_packages('highway_economic_simulator'),
     install_requires=[
         'numpy',
+        'progressbar2',
     ],
+
     # extras_require={
     #     'dev': [
     #     ],

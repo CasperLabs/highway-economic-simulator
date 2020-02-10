@@ -12,7 +12,7 @@ class SimpleValidator(ValidatorBase):
     def set_constant_round_exponent(self, re: uint64):
         self.constant_round_exponent = re
 
-    def announce_round_exponent(self, era_state: 'EraState'):
+    def calculate_new_round_exponent(self, era_state: 'EraState'):
         return self.constant_round_exponent
 
     def probability_of_contributing_to_otf(self, round_exponent: uint64):
@@ -20,3 +20,8 @@ class SimpleValidator(ValidatorBase):
 
     def probability_of_contributing_to_ef(self):
         return 1
+
+    def run(self):
+        while True:
+            pass
+
