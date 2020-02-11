@@ -21,7 +21,3 @@ class SimpleValidator(ValidatorBase):
     def probability_of_contributing_to_ef(self):
         return 1
 
-    def run(self):
-        while True:
-            pass
-

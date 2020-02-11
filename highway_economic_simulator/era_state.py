@@ -2,6 +2,7 @@
 from typing import List, Dict
 from numpy import uint8, uint16, uint32, uint64
 from collections import OrderedDict
+from numpy.random import choice
 
 from .helper import get_total_weight, calculate_q_otf, get_round_beginning_ticks
 from .round import Round
@@ -15,6 +16,7 @@ class EraState:
 
     def __init__(
             self,
+            env,
             initial_supply: uint64,
             seigniorage_rate=ERA_SEIGNIORAGE_RATE,
             fault_tolerance_threshold=FAULT_TOLERANCE_THRESHOLD,
@@ -25,6 +27,7 @@ class EraState:
             underestimation_tolerance=UNDERESTIMATION_TOLERANCE,
             otf_ratio=OTF_RATIO,
     ):
+        self.env = env
         self.validators = []
         self.rounds_dict = OrderedDict()
         self.initial_supply = initial_supply
@@ -188,6 +191,17 @@ class EraState:
         # print('Total minted reward:', total_reward)
         # print('Difference:', total_reward - sum([v.balance for v in self.validators]))
 
+    def init_round(self):
+        tick = self.env.now
+        leader = choice(self.validators, 1, [v.weight for v in self.validators])[0]
+
+        self.rounds_dict[tick] = Round(
+            tick,
+            leader,
+            [])
+
+        # import ipdb; ipdb.set_trace()
+
     def get_total_era_reward(self) -> uint64:
         return self.initial_supply*self.seigniorage_rate
 
@@ -196,3 +210,15 @@ class EraState:
         for i, v in enumerate(self.validators):
             result += 'Validator %d has earned %d tokens\n'%(i, v.balance)
         return result
+
+    def initialize_simulation(self):
+        for v in self.validators:
+            v.set_shared_state(self, self.env)
+
+        # self.assign_round_leaders()
+
+
+    # def assign_round_leaders(self):
+    #     draw = choice(self.validators, TICKS_PER_ERA, [v.weight for v in self.validators])
+
+
