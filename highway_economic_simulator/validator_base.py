@@ -32,12 +32,14 @@ class ValidatorBase:
         msg.propagate(self.env)
 
     def send_conf_msg(self, round_, tick):
-        msg = Message(self, 10, PROP_MSG, tick, round_)
+        msg = Message(self, 10, CONF_MSG, tick, round_)
         round_.messages.append(msg)
         msg.propagate(self.env)
 
-    def send_witness_msg(self):
-        pass
+    def send_wit_msg(self, round_, tick):
+        msg = Message(self, 10, WIT_MSG, tick, round_)
+        round_.messages.append(msg)
+        msg.propagate(self.env)
 
     def set_shared_state(self, era_state, env):
         self.era_state = era_state
@@ -53,16 +55,21 @@ class ValidatorBase:
         round_length = 2**self.round_exponents[round_.beginning_tick]
 
         conf_delay = round(round_length*R_0)
-        wit_delay = round(round_length*R_1)
+        wit_delay = round(round_length*(R_1-R_0))
 
         if self is round_.leader:
             print('Round %d\'s assigned_vld = %s, leader = %s'%(round_.beginning_tick, round_.assigned_validators, round_.leader))
             # print('Sending prop at', self.env.now)
+
             self.send_prop_msg(round_, self.env.now)
+            yield self.env.timeout(conf_delay+wit_delay)
         else:
             yield self.env.timeout(conf_delay)
             # print('Sending conf at', self.env.now)
             self.send_conf_msg(round_, self.env.now)
+            yield self.env.timeout(wit_delay)
+
+        self.send_wit_msg(round_, self.env.now)
 
     def run(self):
         round_counter = 0

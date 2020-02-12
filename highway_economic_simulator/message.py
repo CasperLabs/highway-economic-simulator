@@ -20,7 +20,7 @@ class Message:
             if sender is not m.sender and sender in m.received_validators:
                 self.justified_messages.append(m)
 
-        print(self.justified_messages)
+        # print(self.justified_messages)
 
     def _deliver_to_validator(self, env, validator):
         yield env.timeout(2)

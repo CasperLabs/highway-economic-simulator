@@ -1,7 +1,10 @@
 import simpy
-from highway_economic_simulator import *
 import progressbar
+import numpy as np
 
+from highway_economic_simulator import *
+
+np.random.seed(42)
 
 INITIAL_SUPPLY = 1000000000000
 
@@ -33,3 +36,11 @@ env.run(until=TICKS_PER_ERA)
 
 # state.distribute_rewards()
 # print(state.output_result())
+
+# state.rounds_dict[0].get_level_1_committee()
+for tick, round_ in state.rounds_dict.items():
+    pct = get_total_weight(round_.get_level_1_committee()) \
+        / get_total_weight(round_.assigned_validators)
+    print(tick, pct)
+
+# import ipdb; ipdb.set_trace()
