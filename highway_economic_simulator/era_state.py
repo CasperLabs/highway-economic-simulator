@@ -2,7 +2,6 @@
 from typing import List, Dict
 from numpy import uint8, uint16, uint32, uint64
 from collections import OrderedDict
-from numpy.random import choice
 
 from .helper import get_total_weight, calculate_q_otf, get_round_beginning_ticks
 from .round import Round
@@ -191,14 +190,13 @@ class EraState:
         # print('Total minted reward:', total_reward)
         # print('Difference:', total_reward - sum([v.balance for v in self.validators]))
 
-    def init_round(self):
-        tick = self.env.now
-        leader = choice(self.validators, 1, [v.weight for v in self.validators])[0]
+    def init_round_if_not_already(self, tick):
+        if tick not in self.rounds_dict.keys():
+            tick = self.env.now
 
-        self.rounds_dict[tick] = Round(
-            tick,
-            leader,
-            [])
+            assigned_validators = [v for v in self.validators if tick in v.assigned_ticks]
+
+            self.rounds_dict[tick] = Round(tick, assigned_validators)
 
         # import ipdb; ipdb.set_trace()
 

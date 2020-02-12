@@ -1,8 +1,8 @@
 from decimal import Decimal
 
 # TICKS_PER_ERA = 604800000 # =1000*60*60*24*7
-TICKS_PER_ERA = 1000000
-# TICKS_PER_ERA = 10000
+# TICKS_PER_ERA = 1000000
+TICKS_PER_ERA = 100000
 
 # Default values
 ERA_SEIGNIORAGE_RATE = Decimal('0.000380892') # 380,892 per era ≈ 2% per annum
@@ -21,3 +21,6 @@ EF_REWARD_DELTA = 1 # delta
 UNDERESTIMATION_TOLERANCE = 3 #
 
 OTF_RATIO = Decimal('0.5') # Ratio of OTF rewards to (OTF + EF) rewards
+
+R_0 = Decimal('0.66666')
+R_1 = Decimal('0.83333')

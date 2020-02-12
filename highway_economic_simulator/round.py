@@ -1,6 +1,7 @@
 # from __future__ import annotations
 from typing import List, Dict
 from numpy import uint8, uint16, uint32, uint64
+from numpy.random import choice
 from collections import OrderedDict
 
 from .helper import get_total_weight
@@ -17,14 +18,17 @@ class Round:
             self,
             beginning_tick: uint64,
             assigned_validators: List['ValidatorBase'],
-            round_exponents_dict: Dict['Validator', uint64]
     ):
         self.beginning_tick = beginning_tick
         self.assigned_validators = assigned_validators
         self.punished_validators = []
         self.reward_weight = None
-        self.round_exponents_dict = round_exponents_dict
         self.insufficient_weight = False
+
+        # Assign a leader randomly, based on weight
+        self.leader = choice(assigned_validators, 1, [v.weight for v in assigned_validators])[0]
+
+        self.messages = []
 
     def get_assigned_weight(self) -> uint64:
         return get_total_weight(self.assigned_validators)
