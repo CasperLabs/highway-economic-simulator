@@ -8,15 +8,17 @@ from .message import *
 
 class ValidatorBase:
     weight: uint64
-    balance: uint64
 
-    def __init__(self, weight: uint64, name: str, balance:uint64=0):
+    def __init__(self, weight: uint64, name: str):
         self.env = None
         self.weight = weight # number of staked tokens
-        self.balance = balance # remaining owned tokens
+        self.reward_balance = 0 # remaining owned tokens
         self.round_exponents = OrderedDict()
         self.name = name
         self.assigned_ticks = set([0])
+
+    def send_reward(self, amount):
+        self.reward_balance += amount
 
     def calculate_new_round_exponent(self):
         raise Exception('Method not defined')

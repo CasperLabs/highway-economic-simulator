@@ -57,6 +57,10 @@ class Round:
     def set_insufficient_weight(self, status: bool):
         self.insufficient_weight = status
 
+    def get_last_tick(self):
+        round_ends = [self.beginning_tick + 2**v.round_exponents[self.beginning_tick] for v in self.assigned_validators]
+        return max(round_ends)
+
     def get_level_1_committee(self, only_in_round_messages=True):
 
         if only_in_round_messages:

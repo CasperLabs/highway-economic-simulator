@@ -5,6 +5,8 @@ from highway_economic_simulator import *
 np.random.seed(42)
 
 INITIAL_SUPPLY = 1000000000000
+# DURATION = TICKS_PER_ERA
+DURATION = 1000*60*60*24
 
 # A simple setup of 2 fast 1 slow validators with equal weight
 
@@ -21,9 +23,7 @@ state = EraState(INITIAL_SUPPLY)
 
 state.add_validators([v1, v2, v3])
 
-state.run_simulation(TICKS_PER_ERA, show_progressbar=True)
-
-state.distribute_rewards()
+state.run_simulation(DURATION, show_progressbar=True)
 
 # for tick, round_ in state.rounds_dict.items():
 #     pct = get_total_weight(round_.get_level_1_committee()) \

@@ -1,9 +1,11 @@
 # from __future__ import annotations
 import simpy
 import progressbar
+
 from typing import List, Dict
 from numpy import uint8, uint16, uint32, uint64
 from collections import OrderedDict
+from math import ceil
 
 from .helper import get_total_weight, calculate_q_otf, get_round_beginning_ticks
 from .round import Round
@@ -42,6 +44,8 @@ class EraState:
         self.otf_ratio=OTF_RATIO
 
         self.latest_tick = 0
+
+        self.total_minted_reward = 0
 
     def add_validator(self, validator: 'ValidatorBase'):
         self.validators.append(validator)
@@ -94,8 +98,13 @@ class EraState:
         self.calculate_reward_weights(q_OTF)
         self.determine_underestimated_rounds()
 
-        # Calculate OTF and EF statuses
+        finished_rounds = OrderedDict()
         for tick, round_ in self.rounds_dict.items():
+            if round_.get_last_tick() < self.duration:
+                finished_rounds[tick] = round_
+
+        # Calculate OTF and EF statuses
+        for tick, round_ in finished_rounds.items():
             # Get the list of validators contributing to OTF
 
             validators_contributing_to_otf = \
@@ -117,16 +126,17 @@ class EraState:
             round_.set_ef_status(get_total_weight(validators_contributing_to_ef))
 
         total_reward = self.get_total_era_reward()
+        self.total_minted_reward += total_reward
 
         total_reward_weight = sum([
             r.reward_weight
-            for r in self.rounds_dict.values()
+            for r in finished_rounds.values()
         ])
 
         # Calculate and distribute rewards
-        for tick, round_ in self.rounds_dict.items():
+        for tick, round_ in finished_rounds.items():
             # If OTF not successful, set rewards to 0
-            round_reward = total_reward*round_.reward_weight//total_reward_weight
+            round_reward = total_reward*round_.reward_weight/total_reward_weight
             if not round_.otf_status:
                 otf_reward = 0
                 ef_reward = 0
@@ -134,7 +144,7 @@ class EraState:
                 otf_reward = round_reward*self.otf_ratio
                 allocated_ef_reward = round_reward - otf_reward
                 f_ef = (round_.eventual_contributing_weight - q_OTF)**self.ef_reward_delta \
-                    //(total_weight - q_OTF)**self.ef_reward_delta
+                    /(total_weight - q_OTF)**self.ef_reward_delta
                 ef_reward = allocated_ef_reward*f_ef
 
             round_.set_final_rewards(otf_reward, ef_reward)
@@ -143,17 +153,12 @@ class EraState:
             assigned_weight = round_.get_assigned_weight()
             for v in round_.assigned_validators:
                 if v not in round_.punished_validators:
-                    v.balance += round_.otf_reward*v.weight//assigned_weight
+                    v.send_reward(round_.otf_reward*v.weight/assigned_weight)
 
             # Distribute EF rewards
             for v in self.validators:
                 if v not in round_.punished_validators:
-                    v.balance += round_.ef_reward*v.weight//total_weight
-
-        # # Tests
-        # print('Total balance of validators:', sum([v.balance for v in self.validators]))
-        # print('Total minted reward:', total_reward)
-        # print('Difference:', total_reward - sum([v.balance for v in self.validators]))
+                    v.send_reward(round_.ef_reward*v.weight/total_weight)
 
     def init_round_if_not_already(self, tick):
         if tick not in self.rounds_dict.keys():
@@ -164,38 +169,52 @@ class EraState:
             self.rounds_dict[tick] = Round(tick, assigned_validators)
 
     def get_total_era_reward(self) -> uint64:
-        return self.initial_supply*self.seigniorage_rate
+        return self.initial_supply*((1+self.seigniorage_rate)**(self.duration/TICKS_PER_ERA)-1)
 
     def output_result(self):
+        total_distributed_reward = sum([v.reward_balance for v in self.validators])
+        # annual_seigniorage_rate = (1+self.seigniorage_rate)**(TICKS_PER_YEAR/TICKS_PER_ERA)-1
+        annual_seigniorage_rate = ((self.initial_supply+self.total_minted_reward)/self.initial_supply)**(TICKS_PER_YEAR/self.duration)-1
+        annual_seigniorage_rate_after_burning = ((self.initial_supply+total_distributed_reward)/self.initial_supply)**(TICKS_PER_YEAR/self.duration)-1
+
         result = ''
         result += 'Number of validators: %d\n'%(len(self.validators))
         result += 'Simulated time: %.3g hours\n'%(self.duration/(1000*60*60))
         result += 'Number of rounds: %d\n'%(len(self.rounds_dict))
         result += 'Average round length: %.3g seconds\n'%(self.duration/1000/len(self.rounds_dict))
+        result += 'Total minted reward: %d\n'%(self.total_minted_reward)
+        result += 'Total distributed reward: %d\n'%(total_distributed_reward)
+        result += 'Total burned reward: %d\n'%(self.total_minted_reward-total_distributed_reward)
+        result += 'Projected annual seigniorage rate: %.2g%%\n'%(annual_seigniorage_rate*100)
+        result += 'Net pr. a. seigniorage rate considering burning: %.2g%%\n'%(annual_seigniorage_rate_after_burning*100)
+
         for i, v in enumerate(self.validators):
-            result += '%s has earned %d tokens'%(v.name, v.balance)
+            result += '%s has earned %d tokens'%(v.name, v.reward_balance)
             if i < len(self.validators)-1:
                 result += '\n'
+
         return result
 
     def run_simulation(self, duration, show_progressbar=False):
+        if duration > TICKS_PER_ERA:
+            raise Exception('Simulating for durations longer than one era is not supported yet')
+
         for v in self.validators:
             v.set_shared_state(self, self.env)
 
         self.duration = duration
 
         if show_progressbar:
-            if duration:
-                self.bar = progressbar.ProgressBar(max_value=duration)
-                self.update_frequency = int(duration/1000)
-            else:
-                self.update_frequency = 1000
-                self.bar = progressbar.ProgressBar()
+            self.bar = progressbar.ProgressBar(max_value=duration)
+            self.update_frequency = int(duration/1000)
 
             action = self.env.process(self.update_progressbar())
 
+        # Start running the simulation
         self.env.run(until=duration)
 
+        # At the end, distribute the rewards
+        self.distribute_rewards()
 
     def update_progressbar(self):
         while True:
