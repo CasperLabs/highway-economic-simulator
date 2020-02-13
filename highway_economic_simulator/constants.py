@@ -1,8 +1,8 @@
 from decimal import Decimal
 
 # TICKS_PER_ERA = 604800000 # =1000*60*60*24*7
-# TICKS_PER_ERA = 1000000
-TICKS_PER_ERA = 100000
+TICKS_PER_ERA = 1000000
+# TICKS_PER_ERA = 100000
 
 # Default values
 ERA_SEIGNIORAGE_RATE = Decimal('0.000380892') # 380,892 per era ≈ 2% per annum

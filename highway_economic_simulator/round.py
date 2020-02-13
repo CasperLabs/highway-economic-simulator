@@ -60,6 +60,7 @@ class Round:
     def get_level_1_committee(self, only_in_round_messages=True):
 
         if only_in_round_messages:
+            # Extract messages send during each validator's own round
             messages = []
             for m in self.messages:
                 end_tick = self.beginning_tick + 2**m.sender.round_exponents[self.beginning_tick]
@@ -108,9 +109,6 @@ class Round:
 
         # for m in messages:
         #     print(m, m.justified_messages)
-
-        # print(relation_matrix)
-        # print(c1)
 
         return c1
 

@@ -49,38 +49,6 @@ class EraState:
         for v in validators:
             self.add_validator(v)
 
-    def next_tick(self):
-        for v in self.validators:
-            v.announce_round_exponent(self)
-
-        self.latest_tick += 1
-
-    def generate_rounds(self):
-        # Get a dict which maps from validators to the ticks
-        # which their rounds begin at
-        self.round_beginning_ticks_dict: Dict[Validator, List[uint64]] = {}
-        for v in self.validators:
-            self.round_beginning_ticks_dict[v] = get_round_beginning_ticks(
-                v.announced_round_exponents)
-
-        # Get a list containing all ticks which a round begins at
-        self.round_beginning_ticks: List[uint64] = []
-        for v in self.validators:
-            self.round_beginning_ticks.extend(self.round_beginning_ticks_dict[v])
-        self.round_beginning_ticks = sorted(list(set(self.round_beginning_ticks)))
-
-        # Initialize round objects
-        for tick in self.round_beginning_ticks:
-            assigned_validators = [v for v in self.validators \
-                                   if tick in self.round_beginning_ticks_dict[v]]
-            round_exponents_dict = \
-                {v:v.announced_round_exponents[tick] for v in assigned_validators}
-
-            self.rounds_dict[tick] = Round(
-                tick,
-                assigned_validators,
-                round_exponents_dict)
-
     def calculate_reward_weights(self, q_OTF: uint64):
         # Calculate reward weight for each block/round
         for tick, round_ in self.rounds_dict.items():
@@ -122,23 +90,19 @@ class EraState:
         total_weight = get_total_weight(self.validators)
         q_OTF = calculate_q_otf(total_weight, self.fault_tolerance_threshold)
 
-        self.generate_rounds()
         self.calculate_reward_weights(q_OTF)
         self.determine_underestimated_rounds()
 
         # Calculate OTF and EF statuses
         for tick, round_ in self.rounds_dict.items():
             # Get the list of validators contributing to OTF
-            validators_contributing_to_otf = set()
-            for v in round_.assigned_validators:
-                if v.probability_of_contributing_to_otf(round_.get_round_exponent(v))<=1:
-                    validators_contributing_to_otf.add(v)
 
-            # Get the list of validators contributing to EF
-            validators_contributing_to_ef = set()
-            for v in self.validators:
-                if v.probability_of_contributing_to_ef()<=1:
-                    validators_contributing_to_ef.add(v)
+            validators_contributing_to_otf = \
+                round_.get_level_1_committee(only_in_round_messages=True)
+
+            # validators_contributing_to_ef = round_.get_level_1_committee(only_in_round_messages=False)
+            validators_contributing_to_ef = \
+                set(self.validators)
 
             # If a validator contributes to OTF, then it also contributes to EF
             for v in validators_contributing_to_otf:
@@ -198,8 +162,6 @@ class EraState:
 
             self.rounds_dict[tick] = Round(tick, assigned_validators)
 
-        # import ipdb; ipdb.set_trace()
-
     def get_total_era_reward(self) -> uint64:
         return self.initial_supply*self.seigniorage_rate
 
@@ -212,11 +174,5 @@ class EraState:
     def initialize_simulation(self):
         for v in self.validators:
             v.set_shared_state(self, self.env)
-
-        # self.assign_round_leaders()
-
-
-    # def assign_round_leaders(self):
-    #     draw = choice(self.validators, TICKS_PER_ERA, [v.weight for v in self.validators])
 
 
