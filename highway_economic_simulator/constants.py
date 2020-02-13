@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 # TICKS_PER_ERA = 604800000 # =1000*60*60*24*7
-TICKS_PER_ERA = 1000000
+TICKS_PER_ERA = 10000000
 # TICKS_PER_ERA = 100000
 
 # Default values

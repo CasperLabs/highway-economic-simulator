@@ -58,7 +58,7 @@ class ValidatorBase:
         wit_delay = round(round_length*(R_1-R_0))
 
         if self is round_.leader:
-            print('Round %d\'s assigned_vld = %s, leader = %s'%(round_.beginning_tick, round_.assigned_validators, round_.leader))
+            # print('Round %d\'s assigned_vld = %s, leader = %s'%(round_.beginning_tick, round_.assigned_validators, round_.leader))
             # print('Sending prop at', self.env.now)
 
             self.send_prop_msg(round_, self.env.now)

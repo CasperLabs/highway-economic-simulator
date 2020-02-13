@@ -1,5 +1,3 @@
-import simpy
-import progressbar
 import numpy as np
 
 from highway_economic_simulator import *
@@ -7,8 +5,6 @@ from highway_economic_simulator import *
 np.random.seed(42)
 
 INITIAL_SUPPLY = 1000000000000
-
-env = simpy.Environment()
 
 # A simple setup of 2 fast 1 slow validators with equal weight
 
@@ -21,12 +17,11 @@ v2.set_constant_round_exponent(14)
 v3 = SimpleValidator(100000000000, "C")
 v3.set_constant_round_exponent(14)
 
-state = EraState(env, INITIAL_SUPPLY)
+state = EraState(INITIAL_SUPPLY)
 
 state.add_validators([v1, v2, v3])
-state.initialize_simulation()
 
-env.run(until=TICKS_PER_ERA)
+state.run_simulation(TICKS_PER_ERA, show_progressbar=True)
 
 state.distribute_rewards()
 

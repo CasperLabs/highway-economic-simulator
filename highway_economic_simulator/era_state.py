@@ -1,4 +1,6 @@
 # from __future__ import annotations
+import simpy
+import progressbar
 from typing import List, Dict
 from numpy import uint8, uint16, uint32, uint64
 from collections import OrderedDict
@@ -15,7 +17,6 @@ class EraState:
 
     def __init__(
             self,
-            env,
             initial_supply: uint64,
             seigniorage_rate=ERA_SEIGNIORAGE_RATE,
             fault_tolerance_threshold=FAULT_TOLERANCE_THRESHOLD,
@@ -26,7 +27,7 @@ class EraState:
             underestimation_tolerance=UNDERESTIMATION_TOLERANCE,
             otf_ratio=OTF_RATIO,
     ):
-        self.env = env
+        self.env = simpy.Environment()
         self.validators = []
         self.rounds_dict = OrderedDict()
         self.initial_supply = initial_supply
@@ -167,12 +168,41 @@ class EraState:
 
     def output_result(self):
         result = ''
+        result += 'Number of validators: %d\n'%(len(self.validators))
+        result += 'Simulated time: %.3g hours\n'%(self.duration/(1000*60*60))
+        result += 'Number of rounds: %d\n'%(len(self.rounds_dict))
+        result += 'Average round length: %.3g seconds\n'%(self.duration/1000/len(self.rounds_dict))
         for i, v in enumerate(self.validators):
-            result += 'Validator %d has earned %d tokens\n'%(i, v.balance)
+            result += '%s has earned %d tokens'%(v.name, v.balance)
+            if i < len(self.validators)-1:
+                result += '\n'
         return result
 
-    def initialize_simulation(self):
+    def run_simulation(self, duration, show_progressbar=False):
         for v in self.validators:
             v.set_shared_state(self, self.env)
 
+        self.duration = duration
+
+        if show_progressbar:
+            if duration:
+                self.bar = progressbar.ProgressBar(max_value=duration)
+                self.update_frequency = int(duration/1000)
+            else:
+                self.update_frequency = 1000
+                self.bar = progressbar.ProgressBar()
+
+            action = self.env.process(self.update_progressbar())
+
+        self.env.run(until=duration)
+
+
+    def update_progressbar(self):
+        while True:
+            if self.duration - self.env.now <= self.update_frequency:
+                self.bar.finish()
+                break
+
+            yield self.env.timeout(self.update_frequency)
+            self.bar.update(self.env.now)
 
