@@ -17,9 +17,14 @@ REWARD_WEIGHT_GAMMA = 1 # gamma
 
 EF_REWARD_DELTA = 1 # delta
 
-UNDERESTIMATION_TOLERANCE = 3 #
+# Number of infeasible rounds that trigger punishment in the next feasible round
+UNDERESTIMATION_TOLERANCE = 3
 
 OTF_RATIO = 0.5 # Ratio of OTF rewards to (OTF + EF) rewards
 
 R_0 = 0.66666
 R_1 = 0.83333
+
+# Sizes of CONF and WIT messages on average
+AVERAGE_CONF_SIZE = 2000*8 # bits
+AVERAGE_WIT_SIZE = 2000*8 # bits

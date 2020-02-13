@@ -35,6 +35,11 @@ simple functions.
 - No censorship---validators justify and vote for every message that they receive.
 - No network topology.
 
+TODO:
+
+- [ ] More detailed/realistic calculation of the sizes of `PROP`, `CONF` and `WIT` messages.
+- [ ] Make propagation delay more realistic by basing it on the actual network protocol.
+
 ## Installing
 
 Install the package in development mode

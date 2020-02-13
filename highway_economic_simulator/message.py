@@ -1,8 +1,20 @@
 
-
 PROP_MSG = 0
 CONF_MSG = 1
 WIT_MSG = 2
+
+# Propagation delay is modeled very naively.
+# TBD: Improve
+
+BANDWIDTH = 12000 # bits per second
+
+def propagation_delay(size):
+    """
+    Returns propagation delay in ticks (ms)
+
+    size -- size of the message in bits
+    """
+    return 1000*size//BANDWIDTH
 
 class Message:
     def __init__(self, sender, size, type_, tick, round_):
@@ -16,14 +28,11 @@ class Message:
         self.justified_messages = []
 
         for m in self.round_.messages:
-            # print(tick, m.received_validators)
             if sender is not m.sender and sender in m.received_validators:
                 self.justified_messages.append(m)
 
-        # print(self.justified_messages)
-
     def _deliver_to_validator(self, env, validator):
-        yield env.timeout(2)
+        yield env.timeout(propagation_delay(self.size))
         self.received_validators.append(validator)
 
     def propagate(self, env):

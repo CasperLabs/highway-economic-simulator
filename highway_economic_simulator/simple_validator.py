@@ -15,3 +15,7 @@ class SimpleValidator(ValidatorBase):
     def calculate_new_round_exponent(self):
         return self.constant_round_exponent
 
+    def get_prop_msg_size(self):
+        return 15000*8 # bits
+
+

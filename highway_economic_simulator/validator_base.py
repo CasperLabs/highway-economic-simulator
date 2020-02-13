@@ -23,23 +23,27 @@ class ValidatorBase:
     def calculate_new_round_exponent(self):
         raise Exception('Method not defined')
 
+    def get_prop_msg_size(self):
+        raise Exception('Method not defined')
+
     def announce_round_exponent(self, tick):
         new_round_exponent = self.calculate_new_round_exponent()
         self.round_exponents[tick] = new_round_exponent
         return new_round_exponent
 
     def send_prop_msg(self, round_, tick):
-        msg = Message(self, 10, PROP_MSG, tick, round_)
+        size = self.get_prop_msg_size()
+        msg = Message(self, size, PROP_MSG, tick, round_)
         round_.messages.append(msg)
         msg.propagate(self.env)
 
     def send_conf_msg(self, round_, tick):
-        msg = Message(self, 10, CONF_MSG, tick, round_)
+        msg = Message(self, AVERAGE_CONF_SIZE, CONF_MSG, tick, round_)
         round_.messages.append(msg)
         msg.propagate(self.env)
 
     def send_wit_msg(self, round_, tick):
-        msg = Message(self, 10, WIT_MSG, tick, round_)
+        msg = Message(self, AVERAGE_WIT_SIZE, WIT_MSG, tick, round_)
         round_.messages.append(msg)
         msg.propagate(self.env)
 
@@ -62,7 +66,6 @@ class ValidatorBase:
         if self is round_.leader:
             # print('Round %d\'s assigned_vld = %s, leader = %s'%(round_.beginning_tick, round_.assigned_validators, round_.leader))
             # print('Sending prop at', self.env.now)
-
             self.send_prop_msg(round_, self.env.now)
             yield self.env.timeout(conf_delay+wit_delay)
         else:
