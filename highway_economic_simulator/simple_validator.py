@@ -12,16 +12,10 @@ class SimpleValidator(ValidatorBase):
     def set_constant_round_exponent(self, re: uint64):
         self.constant_round_exponent = re
 
-    def calculate_new_round_exponent(self, era_state: 'EraState'):
+    def calculate_new_round_exponent(self):
         return self.constant_round_exponent
 
-    def probability_of_contributing_to_otf(self, round_exponent: uint64):
-        return 1
+    def get_prop_msg_size(self):
+        return 15000*8 # bits
 
-    def probability_of_contributing_to_ef(self):
-        return 1
-
-    def run(self):
-        while True:
-            pass
 
