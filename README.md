@@ -39,6 +39,7 @@ TODO:
 
 - [ ] More detailed/realistic calculation of the sizes of `PROP`, `CONF` and `WIT` messages.
 - [ ] Make propagation delay more realistic by basing it on the actual network protocol.
+- [ ] Implement round exponent adjustment based on finalization.
 
 ## Installing
 
