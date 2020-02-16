@@ -182,6 +182,7 @@ class EraState:
         result += 'Simulated time: %.3g hours\n'%(self.duration/(1000*60*60))
         result += 'Number of rounds: %d\n'%(len(self.rounds_dict))
         result += 'Average round length: %.3g seconds\n'%(self.duration/1000/len(self.rounds_dict))
+        result += 'Initial token supply: %d\n'%(self.initial_supply)
         result += 'Total minted reward: %d\n'%(self.total_minted_reward)
         result += 'Total distributed reward: %d\n'%(total_distributed_reward)
         result += 'Total burned reward: %d\n'%(self.total_minted_reward-total_distributed_reward)

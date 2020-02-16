@@ -6,6 +6,10 @@ from collections import OrderedDict
 from .constants import *
 from .validator_base import ValidatorBase
 
+
+ACCELERATION_PARAMETER = 10
+
+
 class SimpleValidator(ValidatorBase):
     constant_round_exponent: uint64
 

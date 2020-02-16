@@ -1,4 +1,4 @@
-from decimal import Decimal
+# Constants for the simulation
 
 TICKS_PER_ERA = 604800000 # =1000*60*60*24*7
 TICKS_PER_YEAR = 31536000000 # =1000*60*60*24*365
