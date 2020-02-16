@@ -44,16 +44,16 @@ class Message:
                 action = env.process(self._deliver_to_validator(env, v))
 
     def __repr__(self):
-        result = 'Msg(' + str(self.sender) + ', '
-        result += str(self.size) + ', '
+        result = "Msg(" + str(self.sender) + ", "
+        result += str(self.size) + ", "
         if self.type_ is PROP_MSG:
-            result += 'PROP'
+            result += "PROP"
         elif self.type_ is CONF_MSG:
-            result += 'CONF'
+            result += "CONF"
         elif self.type_ is WIT_MSG:
-            result += 'WIT'
-        result += ', '
+            result += "WIT"
+        result += ", "
         result += str(self.tick)
-        result += ')'
+        result += ")"
 
         return result

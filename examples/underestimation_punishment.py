@@ -1,5 +1,6 @@
 import numpy as np
 
+
 from highway_economic_simulator import *
 
 np.random.seed(42)

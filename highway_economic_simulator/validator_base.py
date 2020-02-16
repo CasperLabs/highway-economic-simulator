@@ -22,10 +22,10 @@ class ValidatorBase:
         self.reward_balance += amount
 
     def calculate_new_round_exponent(self):
-        raise Exception('Method not defined')
+        raise Exception("Method not defined")
 
     def get_prop_msg_size(self):
-        raise Exception('Method not defined')
+        raise Exception("Method not defined")
 
     def announce_round_exponent(self, tick):
         new_round_exponent = self.calculate_new_round_exponent()
@@ -59,7 +59,7 @@ class ValidatorBase:
         round_ = self.era_state.rounds_dict[self.env.now]
 
         # Round length for the given validator
-        round_length = 2**self.round_exponents[round_.beginning_tick]
+        round_length = 2 ** self.round_exponents[round_.beginning_tick]
 
         conf_delay = round(round_length * R_0)
         wit_delay = round(round_length * (R_1 - R_0))
@@ -84,7 +84,7 @@ class ValidatorBase:
             # Calculate the new round exponent
             current_tick = self.env.now
             new_round_exponent = self.announce_round_exponent(current_tick)
-            new_round_length = 2**new_round_exponent
+            new_round_length = 2 ** new_round_exponent
 
             # Add the next tick in advance
             # This is necessary to find out assigned validators when creating

@@ -10,17 +10,15 @@ from .message import *
 
 
 class Round:
-    assigned_validators: List['ValidatorBase']
-    punished_validators: List['ValidatorBase']  # punished for underestimation
-    round_exponents_dict: Dict['Validator', uint64]
+    assigned_validators: List["ValidatorBase"]
+    punished_validators: List["ValidatorBase"]  # punished for underestimation
+    round_exponents_dict: Dict["Validator", uint64]
     beginning_tick: uint64
     reward_weight: uint64
     insufficient_weight: bool
 
     def __init__(
-        self,
-        beginning_tick: uint64,
-        assigned_validators: List['ValidatorBase'],
+        self, beginning_tick: uint64, assigned_validators: List["ValidatorBase"],
     ):
         self.beginning_tick = beginning_tick
         self.assigned_validators = assigned_validators
@@ -29,8 +27,9 @@ class Round:
         self.insufficient_weight = False
 
         # Assign a leader randomly, based on weight
-        self.leader = choice(assigned_validators, 1,
-                             [v.weight for v in assigned_validators])[0]
+        self.leader = choice(
+            assigned_validators, 1, [v.weight for v in assigned_validators]
+        )[0]
 
         self.messages = []
 
@@ -40,11 +39,11 @@ class Round:
     def set_reward_weight(self, reward_weight: uint64):
         self.reward_weight = reward_weight
 
-    def get_round_exponent(self, validator: 'Validator') -> uint64:
+    def get_round_exponent(self, validator: "Validator") -> uint64:
         if validator in self.assigned_validators:
             return self.round_exponents_dict[validator]
         else:
-            raise Exception('Validator not assigned to round')
+            raise Exception("Validator not assigned to round")
 
     def set_otf_status(self, otf_status: bool):
         self.otf_status = otf_status
@@ -61,7 +60,7 @@ class Round:
 
     def get_last_tick(self):
         round_ends = [
-            self.beginning_tick + 2**v.round_exponents[self.beginning_tick]
+            self.beginning_tick + 2 ** v.round_exponents[self.beginning_tick]
             for v in self.assigned_validators
         ]
         return max(round_ends)
@@ -72,8 +71,10 @@ class Round:
             # Extract messages send during each validator's own round
             messages = []
             for m in self.messages:
-                end_tick = self.beginning_tick + 2**m.sender.round_exponents[
-                    self.beginning_tick]
+                end_tick = (
+                    self.beginning_tick
+                    + 2 ** m.sender.round_exponents[self.beginning_tick]
+                )
                 if m.tick < end_tick:
                     messages.append(m)
         else:
@@ -94,7 +95,7 @@ class Round:
         elif len(prop_messages) == 1:
             prop_msg = prop_messages[0]
         else:
-            raise Exception('Each round can only have 1 PROP message')
+            raise Exception("Each round can only have 1 PROP message")
 
         conf_messages = [m for m in messages if m.type_ is CONF_MSG]
         wit_messages = [m for m in messages if m.type_ is WIT_MSG]
@@ -102,15 +103,13 @@ class Round:
         c0 = set([self.leader])
         for m in conf_messages:
             if prop_msg in m.justified_messages:
-                relation_matrix[vld_idx[m.sender],
-                                vld_idx[prop_msg.sender]] = True
+                relation_matrix[vld_idx[m.sender], vld_idx[prop_msg.sender]] = True
                 c0.add(m.sender)
 
         for m_w in wit_messages:
             for m_c in m_w.justified_messages:
                 if m_c in conf_messages:
-                    relation_matrix[vld_idx[m_w.sender],
-                                    vld_idx[m_c.sender]] = True
+                    relation_matrix[vld_idx[m_w.sender], vld_idx[m_c.sender]] = True
 
         c1 = set()
         for i in range(n_validators):
