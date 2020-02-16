@@ -6,7 +6,6 @@ from collections import OrderedDict
 from .constants import *
 from .validator_base import ValidatorBase
 
-
 ACCELERATION_PARAMETER = 10
 
 
@@ -20,6 +19,4 @@ class SimpleValidator(ValidatorBase):
         return self.constant_round_exponent
 
     def get_prop_msg_size(self):
-        return 15000*8 # bits
-
-
+        return 15000 * 8  # bits

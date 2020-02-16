@@ -6,7 +6,7 @@ np.random.seed(42)
 
 INITIAL_SUPPLY = 1000000000000
 # DURATION = TICKS_PER_ERA
-DURATION = 1000*60*60
+DURATION = 1000 * 60 * 60
 
 N_VALIDATORS = 50
 ROUND_EXPONENT = 15
@@ -15,7 +15,7 @@ ROUND_EXPONENT = 15
 validators = []
 
 for i in range(N_VALIDATORS):
-    v = SimpleValidator(100000000000, "V%d"%i)
+    v = SimpleValidator(100000000000, "V%d" % i)
     v.set_constant_round_exponent(ROUND_EXPONENT)
     validators.append(v)
 

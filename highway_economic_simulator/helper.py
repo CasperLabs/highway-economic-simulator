@@ -4,27 +4,30 @@ from numpy import uint64
 
 from .constants import *
 
+
 def get_total_weight(validators: List['Validator']) -> uint64:
     return sum([v.weight for v in validators])
 
-def get_round_beginning_ticks(effective_round_exponents: List[uint64])->List[uint64]:
+
+def get_round_beginning_ticks(
+        effective_round_exponents: List[uint64]) -> List[uint64]:
     result = []
     current_tick = 0
     while True:
         result.append(current_tick)
         current_round_exponent = effective_round_exponents[current_tick]
-        if current_tick+2**current_round_exponent < len(effective_round_exponents):
+        if current_tick + 2**current_round_exponent < len(
+                effective_round_exponents):
             next_tick = current_tick + 2**current_round_exponent
         else:
             break
         current_tick = next_tick
     return result
 
-def calculate_q_otf(
-        total_weight: uint64,
-        fault_tolerance_threshold: uint64,
-        ack_level: uint64=1
-) -> uint64:
+
+def calculate_q_otf(total_weight: uint64,
+                    fault_tolerance_threshold: uint64,
+                    ack_level: uint64 = 1) -> uint64:
     '''
     total_weight: Total weight of all validators in motes
     fault_tolerance_threshold: An integer value such that its division by

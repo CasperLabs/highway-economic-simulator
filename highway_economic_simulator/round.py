@@ -8,18 +8,19 @@ from collections import OrderedDict
 from .helper import get_total_weight
 from .message import *
 
+
 class Round:
     assigned_validators: List['ValidatorBase']
-    punished_validators: List['ValidatorBase'] # punished for underestimation
+    punished_validators: List['ValidatorBase']  # punished for underestimation
     round_exponents_dict: Dict['Validator', uint64]
     beginning_tick: uint64
     reward_weight: uint64
     insufficient_weight: bool
 
     def __init__(
-            self,
-            beginning_tick: uint64,
-            assigned_validators: List['ValidatorBase'],
+        self,
+        beginning_tick: uint64,
+        assigned_validators: List['ValidatorBase'],
     ):
         self.beginning_tick = beginning_tick
         self.assigned_validators = assigned_validators
@@ -28,7 +29,8 @@ class Round:
         self.insufficient_weight = False
 
         # Assign a leader randomly, based on weight
-        self.leader = choice(assigned_validators, 1, [v.weight for v in assigned_validators])[0]
+        self.leader = choice(assigned_validators, 1,
+                             [v.weight for v in assigned_validators])[0]
 
         self.messages = []
 
@@ -58,7 +60,10 @@ class Round:
         self.insufficient_weight = status
 
     def get_last_tick(self):
-        round_ends = [self.beginning_tick + 2**v.round_exponents[self.beginning_tick] for v in self.assigned_validators]
+        round_ends = [
+            self.beginning_tick + 2**v.round_exponents[self.beginning_tick]
+            for v in self.assigned_validators
+        ]
         return max(round_ends)
 
     def get_level_1_committee(self, only_in_round_messages=True):
@@ -67,7 +72,8 @@ class Round:
             # Extract messages send during each validator's own round
             messages = []
             for m in self.messages:
-                end_tick = self.beginning_tick + 2**m.sender.round_exponents[self.beginning_tick]
+                end_tick = self.beginning_tick + 2**m.sender.round_exponents[
+                    self.beginning_tick]
                 if m.tick < end_tick:
                     messages.append(m)
         else:
@@ -96,17 +102,19 @@ class Round:
         c0 = set([self.leader])
         for m in conf_messages:
             if prop_msg in m.justified_messages:
-                relation_matrix[vld_idx[m.sender], vld_idx[prop_msg.sender]] = True
+                relation_matrix[vld_idx[m.sender],
+                                vld_idx[prop_msg.sender]] = True
                 c0.add(m.sender)
 
         for m_w in wit_messages:
             for m_c in m_w.justified_messages:
                 if m_c in conf_messages:
-                    relation_matrix[vld_idx[m_w.sender], vld_idx[m_c.sender]] = True
+                    relation_matrix[vld_idx[m_w.sender],
+                                    vld_idx[m_c.sender]] = True
 
         c1 = set()
         for i in range(n_validators):
-            for j in range(i+1, n_validators):
+            for j in range(i + 1, n_validators):
                 if relation_matrix[i, j] and relation_matrix[j, i]:
                     c1.add(self.assigned_validators[i])
                     c1.add(self.assigned_validators[j])
@@ -115,8 +123,3 @@ class Round:
         #     print(m, m.justified_messages)
 
         return c1
-
-
-
-
-

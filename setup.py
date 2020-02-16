@@ -24,12 +24,11 @@ setup(
     url='',
     description='',
     # long_description='',
-    classifiers=[
-    ],
+    classifiers=[],
 
     # Packages and depencies
     # package_dir={'': 'highway_economic_simulator'},
-    packages = find_packages(exclude=['contrib', 'docs', 'tests']),
+    packages=find_packages(exclude=['contrib', 'docs', 'tests']),
 
     # packages=find_packages('highway_economic_simulator'),
     install_requires=[

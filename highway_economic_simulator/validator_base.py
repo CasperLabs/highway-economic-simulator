@@ -6,13 +6,14 @@ from collections import OrderedDict
 from .constants import *
 from .message import *
 
+
 class ValidatorBase:
     weight: uint64
 
     def __init__(self, weight: uint64, name: str):
         self.env = None
-        self.weight = weight # number of staked tokens
-        self.reward_balance = 0 # remaining owned tokens
+        self.weight = weight  # number of staked tokens
+        self.reward_balance = 0  # remaining owned tokens
         self.round_exponents = OrderedDict()
         self.name = name
         self.assigned_ticks = set([0])
@@ -60,14 +61,14 @@ class ValidatorBase:
         # Round length for the given validator
         round_length = 2**self.round_exponents[round_.beginning_tick]
 
-        conf_delay = round(round_length*R_0)
-        wit_delay = round(round_length*(R_1-R_0))
+        conf_delay = round(round_length * R_0)
+        wit_delay = round(round_length * (R_1 - R_0))
 
         if self is round_.leader:
             # print('Round %d\'s assigned_vld = %s, leader = %s'%(round_.beginning_tick, round_.assigned_validators, round_.leader))
             # print('Sending prop at', self.env.now)
             self.send_prop_msg(round_, self.env.now)
-            yield self.env.timeout(conf_delay+wit_delay)
+            yield self.env.timeout(conf_delay + wit_delay)
         else:
             yield self.env.timeout(conf_delay)
             # print('Sending conf at', self.env.now)
@@ -88,7 +89,7 @@ class ValidatorBase:
             # Add the next tick in advance
             # This is necessary to find out assigned validators when creating
             # the next round instance
-            self.assigned_ticks.add(current_tick+new_round_length)
+            self.assigned_ticks.add(current_tick + new_round_length)
 
             round_action = self.env.process(self.execute_round())
 
