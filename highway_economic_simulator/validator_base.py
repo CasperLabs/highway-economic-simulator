@@ -8,8 +8,6 @@ from .message import *
 
 
 class ValidatorBase:
-    weight: uint64
-
     def __init__(self, weight: uint64, name: str):
         self.env = None
         self.weight = weight  # number of staked tokens
@@ -24,14 +22,15 @@ class ValidatorBase:
     def send_reward(self, amount):
         self.reward_balance += amount
 
-    def calculate_new_round_exponent(self):
+    def determine_new_round_exponent(self):
         raise Exception("Method not defined")
 
     def get_prop_msg_size(self):
         raise Exception("Method not defined")
 
-    def announce_round_exponent(self, tick):
-        new_round_exponent = self.calculate_new_round_exponent()
+    def _update_round_exponent(self, tick):
+        # Called before the start of every new round
+        new_round_exponent = self.determine_new_round_exponent()
         self.round_exponents[tick] = new_round_exponent
         return new_round_exponent
 
@@ -84,7 +83,7 @@ class ValidatorBase:
         round_counter = 0
 
         # Announce the first round exponent
-        current_round_exponent = self.announce_round_exponent(0)
+        current_round_exponent = self._update_round_exponent(0)
 
         while True:
             # print("For vld", self.name, "time is", self.env.now)
@@ -101,7 +100,9 @@ class ValidatorBase:
 
             yield self.env.timeout(new_round_length - 1)
 
-            current_round_exponent = self.announce_round_exponent(current_tick+new_round_length)
+            current_round_exponent = self._update_round_exponent(
+                current_tick + new_round_length
+            )
 
             yield self.env.timeout(1)
             round_counter += 1
