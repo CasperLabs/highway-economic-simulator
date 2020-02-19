@@ -18,6 +18,9 @@ class ValidatorBase:
         self.name = name
         self.assigned_ticks = set([0])
 
+        self.era_state = None
+        self.env = None
+
     def send_reward(self, amount):
         self.reward_balance += amount
 
@@ -79,12 +82,15 @@ class ValidatorBase:
 
     def run(self):
         round_counter = 0
+
+        # Announce the first round exponent
+        current_round_exponent = self.announce_round_exponent(0)
+
         while True:
             # print("For vld", self.name, "time is", self.env.now)
             # Calculate the new round exponent
             current_tick = self.env.now
-            new_round_exponent = self.announce_round_exponent(current_tick)
-            new_round_length = 2 ** new_round_exponent
+            new_round_length = 2 ** current_round_exponent
 
             # Add the next tick in advance
             # This is necessary to find out assigned validators when creating
@@ -93,7 +99,11 @@ class ValidatorBase:
 
             round_action = self.env.process(self.execute_round())
 
-            yield self.env.timeout(new_round_length)
+            yield self.env.timeout(new_round_length - 1)
+
+            current_round_exponent = self.announce_round_exponent(current_tick+new_round_length)
+
+            yield self.env.timeout(1)
             round_counter += 1
 
     def __repr__(self):

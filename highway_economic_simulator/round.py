@@ -122,3 +122,9 @@ class Round:
         #     print(m, m.justified_messages)
 
         return c1
+
+    def is_otf_successful(self, q_OTF):
+        return (
+            get_total_weight(self.get_level_1_committee(only_in_round_messages=True))
+            >= q_OTF
+        )

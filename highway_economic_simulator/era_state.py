@@ -5,7 +5,7 @@ import progressbar
 from typing import List, Dict
 from numpy import uint8, uint16, uint32, uint64
 from collections import OrderedDict
-from math import ceil
+from math import log
 from .helper import get_total_weight, calculate_q_otf, get_round_beginning_ticks
 from .round import Round
 from .constants import *
@@ -50,6 +50,10 @@ class EraState:
     def add_validator(self, validator: "ValidatorBase"):
         self.validators.append(validator)
 
+        # Calculate relevant quantities
+        self.total_weight = get_total_weight(self.validators)
+        self.q_OTF = calculate_q_otf(self.total_weight, self.fault_tolerance_threshold)
+
     def add_validators(self, validators: List["ValidatorBase"]):
         for v in validators:
             self.add_validator(v)
@@ -91,11 +95,8 @@ class EraState:
                     punishment = True
 
     def distribute_rewards(self):
-        # Calculate relevant quantities
-        total_weight = get_total_weight(self.validators)
-        q_OTF = calculate_q_otf(total_weight, self.fault_tolerance_threshold)
 
-        self.calculate_reward_weights(q_OTF)
+        self.calculate_reward_weights(self.q_OTF)
         self.determine_underestimated_rounds()
 
         finished_rounds = OrderedDict()
@@ -118,7 +119,7 @@ class EraState:
             for v in validators_contributing_to_otf:
                 validators_contributing_to_ef.add(v)
 
-            if get_total_weight(validators_contributing_to_otf) >= q_OTF:
+            if get_total_weight(validators_contributing_to_otf) >= self.q_OTF:
                 round_.set_otf_status(True)
             else:
                 round_.set_otf_status(False)
@@ -141,9 +142,9 @@ class EraState:
                 otf_reward = round_reward * self.otf_ratio
                 allocated_ef_reward = round_reward - otf_reward
                 f_ef = (
-                    (round_.eventual_contributing_weight - q_OTF)
+                    (round_.eventual_contributing_weight - self.q_OTF)
                     ** self.ef_reward_delta
-                    / (total_weight - q_OTF) ** self.ef_reward_delta
+                    / (self.total_weight - self.q_OTF) ** self.ef_reward_delta
                 )
                 ef_reward = allocated_ef_reward * f_ef
 
@@ -158,7 +159,7 @@ class EraState:
             # Distribute EF rewards
             for v in self.validators:
                 if v not in round_.punished_validators:
-                    v.send_reward(round_.ef_reward * v.weight / total_weight)
+                    v.send_reward(round_.ef_reward * v.weight / self.total_weight)
 
     def init_round_if_not_already(self, tick):
         if tick not in self.rounds_dict.keys():
@@ -178,20 +179,24 @@ class EraState:
     def output_result(self):
         total_distributed_reward = sum([v.reward_balance for v in self.validators])
         # annual_seigniorage_rate = (1+self.seigniorage_rate)**(TICKS_PER_YEAR/TICKS_PER_ERA)-1
+
         annual_seigniorage_rate = (
             (self.initial_supply + self.total_minted_reward) / self.initial_supply
         ) ** (TICKS_PER_YEAR / self.duration) - 1
+
         annual_seigniorage_rate_after_burning = (
             (self.initial_supply + total_distributed_reward) / self.initial_supply
         ) ** (TICKS_PER_YEAR / self.duration) - 1
+
+        average_round_length = self.duration / 1000 / len(self.rounds_dict)
+        average_round_exponent = log(self.duration / len(self.rounds_dict), 2)
 
         result = ""
         result += "Number of validators: %d\n" % (len(self.validators))
         result += "Simulated time: %.3g hours\n" % (self.duration / (1000 * 60 * 60))
         result += "Number of rounds: %d\n" % (len(self.rounds_dict))
-        result += "Average round length: %.3g seconds\n" % (
-            self.duration / 1000 / len(self.rounds_dict)
-        )
+        result += "Average round length: %.3g seconds\n" % (average_round_length)
+        result += "Average round exponent: %.3g\n" % (average_round_exponent)
         result += "Initial token supply: %d\n" % (self.initial_supply)
         result += "Total minted reward: %d\n" % (self.total_minted_reward)
         result += "Total distributed reward: %d\n" % (total_distributed_reward)

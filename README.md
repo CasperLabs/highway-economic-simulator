@@ -26,6 +26,7 @@ simple functions.
 - Reward distribution.
 - Ticks, rounds and round exponents.
 - Ability to add different behavior/rules into validators.
+- Validators adjust their new round exponent just before the start of their next round.
 
 *What will NOT be implemented:*
 
@@ -38,7 +39,7 @@ TODO:
 
 - [ ] More detailed and realistic calculation of the sizes of `PROP`, `CONF` and `WIT` messages.
 - [ ] Make propagation delay more realistic by basing it on the actual network protocol.
-- [ ] Implement round exponent adjustment based on finalization.
+- [x] Implement round exponent adjustment based on finalization.
 - [ ] Generate PDF reports of simulations.
 
 ## Installing
