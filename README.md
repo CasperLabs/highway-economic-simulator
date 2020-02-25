@@ -3,16 +3,15 @@
 This repository implements a Python module for Discrete Event Simulation of
 economics of the
 [Casperlabs Highway Protocol](https://github.com/casperLabs/highway). It is
-possible to simulate various economic aspects of the protocol such as
+possible to simulate various economic aspects of the protocol, such as
 
-- Reward distribution (added)
-- Transaction fees (upcoming)
-- Tendency to form oligopolies (upcoming)
-- ... ([send feature requests here](mailto:onur@casperlabs.io))
+- [x] Reward distribution (click [here](https://hackmd.io/@onur/highway_reward_distribution) to see the formulation)
+- [ ] Transaction fees
+- [ ] Tendency to form oligopolies
+- [ ] ...
+- [ ] Want or need a feature? [Contact me](mailto:onur@casperlabs.io).
 
-This repository contains code to serve as a mockup for various economic aspects
-of Highway, e.g. reward distribution. As such, it can be used by validators to
-project rewards and different scenarios.
+The simulator can be used by validators to project rewards and test out different scenarios.
 
 ## Assumptions and simplifications
 
@@ -27,6 +26,7 @@ simple functions.
 - Reward distribution.
 - Ticks, rounds and round exponents.
 - Ability to add different behavior/rules into validators.
+- Validators adjust their new round exponent just before the start of their next round.
 
 *What will NOT be implemented:*
 
@@ -37,9 +37,10 @@ simple functions.
 
 TODO:
 
-- [ ] More detailed/realistic calculation of the sizes of `PROP`, `CONF` and `WIT` messages.
+- [ ] More detailed and realistic calculation of the sizes of `PROP`, `CONF` and `WIT` messages.
 - [ ] Make propagation delay more realistic by basing it on the actual network protocol.
-- [ ] Implement round exponent adjustment based on finalization.
+- [x] Implement round exponent adjustment based on finalization.
+- [ ] Generate PDF reports of simulations.
 
 ## Installing
 

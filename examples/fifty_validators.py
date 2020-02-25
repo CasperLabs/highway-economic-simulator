@@ -6,22 +6,22 @@ np.random.seed(42)
 
 INITIAL_SUPPLY = 1000000000000
 # DURATION = TICKS_PER_ERA
-DURATION = 1000 * 60 * 60 * 24
+DURATION = 1000 * 60 * 60
 
+N_VALIDATORS = 50
+ROUND_EXPONENT = 15
 # A simple setup of 2 fast 1 slow validators with equal weight
 
-v1 = HonestValidator(100000000000, "A")
-v1.set_constant_round_exponent(15)
+validators = []
 
-v2 = HonestValidator(100000000000, "B")
-v2.set_constant_round_exponent(14)
-
-v3 = HonestValidator(100000000000, "C")
-v3.set_constant_round_exponent(14)
+for i in range(N_VALIDATORS):
+    v = HonestValidator(100000000000, "V%d" % i)
+    v.set_constant_round_exponent(ROUND_EXPONENT)
+    validators.append(v)
 
 state = EraState(INITIAL_SUPPLY)
 
-state.add_validators([v1, v2, v3])
+state.add_validators(validators)
 
 state.run_simulation(DURATION, show_progressbar=True)
 

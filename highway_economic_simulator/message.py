@@ -1,4 +1,3 @@
-
 PROP_MSG = 0
 CONF_MSG = 1
 WIT_MSG = 2
@@ -6,7 +5,8 @@ WIT_MSG = 2
 # Propagation delay is modeled very naively.
 # TBD: Improve
 
-BANDWIDTH = 12000 # bits per second
+BANDWIDTH = 12000  # bits per second
+
 
 def propagation_delay(size):
     """
@@ -14,7 +14,8 @@ def propagation_delay(size):
 
     size -- size of the message in bits
     """
-    return 1000*size//BANDWIDTH
+    return 1000 * size // BANDWIDTH
+
 
 class Message:
     def __init__(self, sender, size, type_, tick, round_):
@@ -43,16 +44,16 @@ class Message:
                 action = env.process(self._deliver_to_validator(env, v))
 
     def __repr__(self):
-        result = 'Msg('+str(self.sender)+', '
-        result += str(self.size)+', '
+        result = "Msg(" + str(self.sender) + ", "
+        result += str(self.size) + ", "
         if self.type_ is PROP_MSG:
-            result += 'PROP'
+            result += "PROP"
         elif self.type_ is CONF_MSG:
-            result += 'CONF'
+            result += "CONF"
         elif self.type_ is WIT_MSG:
-            result += 'WIT'
-        result += ', '
+            result += "WIT"
+        result += ", "
         result += str(self.tick)
-        result += ')'
+        result += ")"
 
         return result
