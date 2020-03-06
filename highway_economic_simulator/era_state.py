@@ -7,7 +7,7 @@ from numpy import uint8, uint16, uint32, uint64
 from collections import OrderedDict
 from math import log
 from .helper import get_total_weight, calculate_q_otf, get_round_beginning_ticks
-from .round import Round
+from .protocol_round import Round
 from .constants import *
 
 
@@ -198,9 +198,9 @@ class EraState:
         result += "Average round length: %.3g seconds\n" % (average_round_length)
         result += "Average round exponent: %.3g\n" % (average_round_exponent)
         result += "Initial token supply: %d\n" % (self.initial_supply)
-        result += "Total minted reward: %d\n" % (self.total_minted_reward)
-        result += "Total distributed reward: %d\n" % (total_distributed_reward)
-        result += "Total burned reward: %d\n" % (
+        result += "Total minted reward: %f\n" % (self.total_minted_reward)
+        result += "Total distributed reward: %f\n" % (total_distributed_reward)
+        result += "Total burned reward: %f\n" % (
             self.total_minted_reward - total_distributed_reward
         )
         result += "Projected annual seigniorage rate: %.2g%%\n" % (
@@ -211,7 +211,7 @@ class EraState:
         )
 
         for i, v in enumerate(self.validators):
-            result += "%s has earned %d tokens" % (v.name, v.reward_balance)
+            result += "%s has earned %f tokens" % (v.name, v.reward_balance)
             if i < len(self.validators) - 1:
                 result += "\n"
 

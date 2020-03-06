@@ -6,4 +6,4 @@ from .single_speed_validator import SingleSpeedValidator
 
 from .era_state import *
 from .helper import *
-from .round import *
+from .protocol_round import *
