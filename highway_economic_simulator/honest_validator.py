@@ -68,13 +68,13 @@ class HonestValidator(ValidatorBase):
             decrease = self.check_accelerate()
 
             if increase:
-                if self.name == "A":
-                    print(f"{self.name} slower")
+                #if self.name == "A":
+                #    print(f"{self.name} slower")
                 self.constant_round_exponent += 1
                 changed = True
             elif not increase and decrease:
-                if self.name == "A":
-                    print(f"{self.name} faster")
+                #if self.name == "A":
+                #    print(f"{self.name} faster")
                 self.constant_round_exponent -= 1
                 changed = True
 
