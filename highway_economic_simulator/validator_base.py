@@ -2,6 +2,7 @@
 from typing import List, Dict
 from numpy import uint8, uint16, uint32, uint64
 from collections import OrderedDict
+from sortedcontainers import SortedSet
 
 from .constants import *
 from .message import *
@@ -9,12 +10,11 @@ from .message import *
 
 class ValidatorBase:
     def __init__(self, weight: uint64, name: str):
-        self.env = None
         self.weight = weight  # number of staked tokens
         self.reward_balance = 0  # remaining owned tokens
         self.round_exponents = OrderedDict()
         self.name = name
-        self.assigned_ticks = set([0])
+        self.assigned_ticks = SortedSet([0])
 
         self.era_state = None
         self.env = None

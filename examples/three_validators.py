@@ -11,13 +11,13 @@ DURATION = 1000 * 60 * 60 * 24
 # A simple setup of 2 fast 1 slow validators with equal weight
 
 v1 = HonestValidator(100000000000, "A")
-v1.set_constant_round_exponent(15)
+v1.set_initial_round_exponent(13)
 
 v2 = HonestValidator(100000000000, "B")
-v2.set_constant_round_exponent(14)
+v2.set_initial_round_exponent(13)
 
 v3 = HonestValidator(100000000000, "C")
-v3.set_constant_round_exponent(14)
+v3.set_initial_round_exponent(13)
 
 state = EraState(INITIAL_SUPPLY)
 

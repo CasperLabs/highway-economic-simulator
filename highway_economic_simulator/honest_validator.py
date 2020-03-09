@@ -7,12 +7,12 @@ BREAK_PARAM_C1 = 40
 
 
 class HonestValidator(ValidatorBase):
-    def set_constant_round_exponent(self, re):
+    def set_initial_round_exponent(self, re):
         # To be called before the simulation starts
         if self.env:
             assert self.env.now == 0
 
-        self.constant_round_exponent = re
+        self.round_exponent = re
 
         self.next_break_target = 0 + BREAK_PARAM_C1 * 2 ** re
 
@@ -22,70 +22,70 @@ class HonestValidator(ValidatorBase):
 
         current_tick = self.env.now
 
-        ticks = list(self.era_state.rounds_dict.keys())
-        assert ticks == sorted(ticks)
+        ticks = self.assigned_ticks[-(BREAK_PARAM_C1+1):-1]
 
-        relevant_rounds = []
-        counter = 0
+        # Round exponents for new rounds are announced on the tick that is
+        # right before the new round's beginning: (beginning_tick - 1)
+        assert(self.assigned_ticks[-1] == current_tick+1)
 
-        for r in reversed(self.era_state.rounds_dict.values()):
-            if counter >= BREAK_PARAM_C1:
-                break
-
-            # Round exponents for new rounds are announced on the tick that is
-            # right before the new round's beginning: (beginning_tick - 1)
-            if current_tick <= r.get_last_tick() - 1:
-                continue
-            else:
-                relevant_rounds.append(r)
-                counter += 1
-
-        relevant_rounds.reverse()
+        relevant_ticks = ticks[-BREAK_PARAM_C1:]
+        relevant_rounds = [self.era_state.rounds_dict[tick] for tick in reversed(relevant_ticks)]
 
         fail_counter = 0
         increase_round_exponent = False
 
         for r in relevant_rounds:
-            if not r.is_otf_successful(self.era_state.q_OTF):
+            if current_tick + 1 >= r.get_last_tick():
+                store_result = True
+            else:
+                store_result = False
+
+            if not r.is_otf_successful(self.era_state.q_OTF, store_result=store_result):
                 fail_counter += 1
             if fail_counter >= BREAK_PARAM_C0:
                 increase_round_exponent = True
                 break
 
-        # for r in relevant_rounds: print(r.beginning_tick, len(r.assigned_validators),r.is_otf_successful(self.era_state.q_OTF))
-
         return increase_round_exponent
 
     def check_accelerate(self):
-        return self.n_rounds_since_change >= ACCEL_PARAM
+        next_tick = self.env.now+1
+
+        return next_tick//2**self.round_exponent%ACCEL_PARAM == 0
 
     def determine_new_round_exponent(self):
         changed = False
         current_tick = self.env.now
+        next_tick = current_tick + 1
+        # print(current_tick, self.next_break_target-1)
 
-        if current_tick >= self.next_break_target - 1:
+        if next_tick >= self.next_break_target:
             increase = self.check_break()
             decrease = self.check_accelerate()
 
             if increase:
-                if self.name == "A":
-                    print(f"{self.name} slower")
-                self.constant_round_exponent += 1
-                changed = True
-            elif not increase and decrease:
-                if self.name == "A":
-                    print(f"{self.name} faster")
-                self.constant_round_exponent -= 1
+                # if self.name == "A":
+                    # print(f"{self.name} slower")
+                self.round_exponent += 1
                 changed = True
 
-            self.next_break_target += BREAK_PARAM_C1 * 2 ** self.constant_round_exponent
+            elif not increase and decrease:
+                # if self.name == "A":
+                    # print(f"{self.name} faster")
+                self.round_exponent -= 1
+
+                changed = True
 
         if changed:
-            self.n_rounds_since_change = 0
+            new_break_target = next_tick + BREAK_PARAM_C1 * 2 ** self.round_exponent
+            self.next_break_target = max(new_break_target, self.next_break_target)
+            # self.n_rounds_since_change = 0
         else:
-            self.n_rounds_since_change += 1
+            new_break_target = next_tick + 2 ** self.round_exponent
+            self.next_break_target = max(new_break_target, self.next_break_target)
+            # self.n_rounds_since_change += 1
 
-        return self.constant_round_exponent
+        return self.round_exponent
 
     def get_prop_msg_size(self):
         return 15000 * 8  # bits
