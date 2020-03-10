@@ -169,6 +169,9 @@ class EraState:
                 v for v in self.validators if tick in v.assigned_ticks
             ]
 
+            # if assigned_validators == []:
+                # import ipdb; ipdb.set_trace()
+
             self.rounds_dict[tick] = Round(tick, assigned_validators)
 
     def get_total_era_reward(self) -> uint64:
@@ -203,10 +206,10 @@ class EraState:
         result += "Total burned reward: %d\n" % (
             self.total_minted_reward - total_distributed_reward
         )
-        result += "Projected annual seigniorage rate: %.2g%%\n" % (
+        result += "Projected annual seigniorage rate: %.4g%%\n" % (
             annual_seigniorage_rate * 100
         )
-        result += "Net pr. a. seigniorage rate considering burning: %.2g%%\n" % (
+        result += "Net pr. a. seigniorage rate considering burning: %.4g%%\n" % (
             annual_seigniorage_rate_after_burning * 100
         )
 

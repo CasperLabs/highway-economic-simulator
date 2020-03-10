@@ -27,11 +27,25 @@ class Round:
         self.insufficient_weight = False
 
         # Assign a leader randomly, based on weight
+
+        # try:
         self.leader = choice(
             assigned_validators, 1, [v.weight for v in assigned_validators]
         )[0]
+        # except:
+            # import ipdb; ipdb.set_trace()
+
 
         self.messages = []
+
+        self.otf_results = {}
+
+        self.round_ends = [
+            self.beginning_tick + 2 ** v.round_exponents[self.beginning_tick]
+            for v in self.assigned_validators
+        ]
+        self.last_tick = max(self.round_ends)
+
 
     def get_assigned_weight(self) -> uint64:
         return get_total_weight(self.assigned_validators)
@@ -59,13 +73,9 @@ class Round:
         self.insufficient_weight = status
 
     def get_last_tick(self):
-        round_ends = [
-            self.beginning_tick + 2 ** v.round_exponents[self.beginning_tick]
-            for v in self.assigned_validators
-        ]
-        return max(round_ends)
+        return self.last_tick
 
-    def get_level_1_committee(self, only_in_round_messages=True):
+    def get_level_1_committee(self, only_in_round_messages=True, store_result=False):
 
         if only_in_round_messages:
             # Extract messages send during each validator's own round
@@ -123,8 +133,16 @@ class Round:
 
         return c1
 
-    def is_otf_successful(self, q_OTF):
-        return (
-            get_total_weight(self.get_level_1_committee(only_in_round_messages=True))
-            >= q_OTF
-        )
+    def is_otf_successful(self, q_OTF, store_result=True):
+
+        if store_result and q_OTF in self.otf_results:
+            # print("Using stored result")
+            return self.otf_results[q_OTF]
+        else:
+            result = get_total_weight(self.get_level_1_committee(only_in_round_messages=True)) >= q_OTF
+
+            if store_result:
+                self.otf_results[q_OTF] = result
+
+            return result
+
