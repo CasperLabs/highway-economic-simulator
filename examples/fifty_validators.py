@@ -6,17 +6,18 @@ np.random.seed(42)
 
 INITIAL_SUPPLY = 1000000000000
 # DURATION = TICKS_PER_ERA
-DURATION = 1000 * 60 * 60
+DURATION = 1000 * 60 * 60 * 5
+INITIAL_ROUND_EXPONENT = 13
+
 
 N_VALIDATORS = 50
-ROUND_EXPONENT = 15
 # A simple setup of 2 fast 1 slow validators with equal weight
 
 validators = []
 
 for i in range(N_VALIDATORS):
     v = HonestValidator(100000000000, "V%d" % i)
-    v.set_constant_round_exponent(ROUND_EXPONENT)
+    v.set_initial_round_exponent(INITIAL_ROUND_EXPONENT)
     validators.append(v)
 
 state = EraState(INITIAL_SUPPLY)

@@ -16,8 +16,6 @@ class HonestValidator(ValidatorBase):
 
         self.next_break_target = 0 + BREAK_PARAM_C1 * 2 ** re
 
-        self.n_rounds_since_change = 0
-
     def check_break(self):
 
         current_tick = self.env.now
@@ -57,21 +55,18 @@ class HonestValidator(ValidatorBase):
         changed = False
         current_tick = self.env.now
         next_tick = current_tick + 1
-        # print(current_tick, self.next_break_target-1)
+
+        # print(next_tick, self.next_break_target)
 
         if next_tick >= self.next_break_target:
             increase = self.check_break()
             decrease = self.check_accelerate()
 
             if increase:
-                # if self.name == "A":
-                    # print(f"{self.name} slower")
                 self.round_exponent += 1
                 changed = True
 
             elif not increase and decrease:
-                # if self.name == "A":
-                    # print(f"{self.name} faster")
                 self.round_exponent -= 1
 
                 changed = True
@@ -79,11 +74,9 @@ class HonestValidator(ValidatorBase):
         if changed:
             new_break_target = next_tick + BREAK_PARAM_C1 * 2 ** self.round_exponent
             self.next_break_target = max(new_break_target, self.next_break_target)
-            # self.n_rounds_since_change = 0
         else:
             new_break_target = next_tick + 2 ** self.round_exponent
             self.next_break_target = max(new_break_target, self.next_break_target)
-            # self.n_rounds_since_change += 1
 
         return self.round_exponent
 
