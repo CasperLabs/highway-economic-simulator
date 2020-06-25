@@ -20,13 +20,9 @@ class EraState:
     def __init__(
         self,
         initial_supply: uint64,
-        seigniorage_rate=ERA_SEIGNIORAGE_RATE,
+        seigniorage_rate=ROUND_SEIGNIORAGE_RATE,
         fault_tolerance_threshold=FAULT_TOLERANCE_THRESHOLD,
-        reward_weight_alpha=REWARD_WEIGHT_ALPHA,
-        reward_weight_beta=REWARD_WEIGHT_BETA,
-        reward_weight_gamma=REWARD_WEIGHT_GAMMA,
-        ef_reward_delta=EF_REWARD_DELTA,
-        underestimation_tolerance=UNDERESTIMATION_TOLERANCE,
+        optimum_round_exponent=OPTIMUM_ROUND_EXPONENT,
         otf_ratio=OTF_RATIO,
     ):
         self.env = simpy.Environment()
@@ -35,12 +31,12 @@ class EraState:
         self.initial_supply = initial_supply
 
         self.fault_tolerance_threshold = FAULT_TOLERANCE_THRESHOLD
-        self.seigniorage_rate = ERA_SEIGNIORAGE_RATE
-        self.reward_weight_alpha = REWARD_WEIGHT_ALPHA
-        self.reward_weight_beta = REWARD_WEIGHT_BETA
-        self.reward_weight_gamma = REWARD_WEIGHT_GAMMA
-        self.ef_reward_delta = EF_REWARD_DELTA
-        self.underestimation_tolerance = UNDERESTIMATION_TOLERANCE
+        self.round_seigniorage_rate = ROUND_SEIGNIORAGE_RATE
+
+        # Note: The following should change if the simulator is changed to a multi-era one
+        self.base_round_reward = self.initial_supply * self.round_seigniorage_rate
+
+        self.optimum_round_exponent = OPTIMUM_ROUND_EXPONENT
         self.otf_ratio = OTF_RATIO
 
         self.latest_tick = 0
@@ -58,46 +54,7 @@ class EraState:
         for v in validators:
             self.add_validator(v)
 
-    def calculate_reward_weights(self, q_OTF: uint64):
-        # Calculate reward weight for each block/round
-        for tick, round_ in self.rounds_dict.items():
-            assigned_weight = round_.get_assigned_weight()
-            if assigned_weight >= q_OTF:
-                reward_weight = (
-                    self.reward_weight_alpha * assigned_weight
-                    + (1 - self.reward_weight_alpha) * self.reward_weight_beta
-                    - self.reward_weight_beta * q_OTF
-                ) ** self.reward_weight_gamma
-            else:
-                round_.set_insufficient_weight(True)
-                reward_weight = 0
-
-            round_.set_reward_weight(reward_weight)
-
-    def determine_underestimated_rounds(self):
-        for v in self.validators:
-            counter = 0
-            punishment = False
-
-            for tick, round_ in self.rounds_dict.items():
-                if v not in round_.assigned_validators:
-                    continue
-
-                if punishment and not round_.insufficient_weight:
-                    round_.punished_validators.append(v)
-                    punishment = False
-                    counter = 0
-
-                if round_.insufficient_weight:
-                    counter += 1
-
-                if counter >= self.underestimation_tolerance:
-                    punishment = True
-
     def distribute_rewards(self):
-
-        self.calculate_reward_weights(self.q_OTF)
-        self.determine_underestimated_rounds()
 
         finished_rounds = OrderedDict()
         for tick, round_ in self.rounds_dict.items():
@@ -126,25 +83,23 @@ class EraState:
 
             round_.set_ef_status(get_total_weight(validators_contributing_to_ef))
 
-        total_reward = self.get_total_era_reward()
-        self.total_minted_reward += total_reward
-
-        total_reward_weight = sum([r.reward_weight for r in finished_rounds.values()])
-
         # Calculate and distribute rewards
         for tick, round_ in finished_rounds.items():
+            round_reward = self.base_round_reward * pow(
+                2, min(round_.leader_round_exponent - self.optimum_round_exponent, 0)
+            )
+
+            self.total_minted_reward += round_reward
+
             # If OTF not successful, set rewards to 0
-            round_reward = total_reward * round_.reward_weight / total_reward_weight
             if not round_.otf_status:
                 otf_reward = 0
                 ef_reward = 0
             else:
                 otf_reward = round_reward * self.otf_ratio
                 allocated_ef_reward = round_reward - otf_reward
-                f_ef = (
-                    (round_.eventual_contributing_weight - self.q_OTF)
-                    ** self.ef_reward_delta
-                    / (self.total_weight - self.q_OTF) ** self.ef_reward_delta
+                f_ef = (round_.eventual_contributing_weight - self.q_OTF) / (
+                    self.total_weight - self.q_OTF
                 )
                 ef_reward = allocated_ef_reward * f_ef
 
@@ -153,13 +108,11 @@ class EraState:
             # Distribute OTF rewards
             assigned_weight = round_.get_assigned_weight()
             for v in round_.assigned_validators:
-                if v not in round_.punished_validators:
-                    v.send_reward(round_.otf_reward * v.weight / assigned_weight)
+                v.send_reward(round_.otf_reward * v.weight / assigned_weight)
 
             # Distribute EF rewards
             for v in self.validators:
-                if v not in round_.punished_validators:
-                    v.send_reward(round_.ef_reward * v.weight / self.total_weight)
+                v.send_reward(round_.ef_reward * v.weight / self.total_weight)
 
     def init_round_if_not_already(self, tick):
         if tick not in self.rounds_dict.keys():
@@ -170,18 +123,12 @@ class EraState:
             ]
 
             # if assigned_validators == []:
-                # import ipdb; ipdb.set_trace()
+            # import ipdb; ipdb.set_trace()
 
             self.rounds_dict[tick] = Round(tick, assigned_validators)
 
-    def get_total_era_reward(self) -> uint64:
-        return self.initial_supply * (
-            (1 + self.seigniorage_rate) ** (self.duration / TICKS_PER_ERA) - 1
-        )
-
     def output_result(self):
         total_distributed_reward = sum([v.reward_balance for v in self.validators])
-        # annual_seigniorage_rate = (1+self.seigniorage_rate)**(TICKS_PER_YEAR/TICKS_PER_ERA)-1
 
         annual_seigniorage_rate = (
             (self.initial_supply + self.total_minted_reward) / self.initial_supply

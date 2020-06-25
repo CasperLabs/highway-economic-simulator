@@ -26,11 +26,11 @@ class Message:
         self.type_ = type_
 
         self.received_validators = []
-        self.justified_messages = []
+        self.cited_messages = []
 
         for m in self.round_.messages:
             if sender is not m.sender and sender in m.received_validators:
-                self.justified_messages.append(m)
+                self.cited_messages.append(m)
 
     def _deliver_to_validator(self, env, validator):
         yield env.timeout(propagation_delay(self.size))

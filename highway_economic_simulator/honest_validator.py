@@ -20,14 +20,16 @@ class HonestValidator(ValidatorBase):
 
         current_tick = self.env.now
 
-        ticks = self.assigned_ticks[-(BREAK_PARAM_C1+1):-1]
+        ticks = self.assigned_ticks[-(BREAK_PARAM_C1 + 1) : -1]
 
         # Round exponents for new rounds are announced on the tick that is
         # right before the new round's beginning: (beginning_tick - 1)
-        assert(self.assigned_ticks[-1] == current_tick+1)
+        assert self.assigned_ticks[-1] == current_tick + 1
 
         relevant_ticks = ticks[-BREAK_PARAM_C1:]
-        relevant_rounds = [self.era_state.rounds_dict[tick] for tick in reversed(relevant_ticks)]
+        relevant_rounds = [
+            self.era_state.rounds_dict[tick] for tick in reversed(relevant_ticks)
+        ]
 
         fail_counter = 0
         increase_round_exponent = False
@@ -47,9 +49,9 @@ class HonestValidator(ValidatorBase):
         return increase_round_exponent
 
     def check_accelerate(self):
-        next_tick = self.env.now+1
+        next_tick = self.env.now + 1
 
-        return next_tick//2**self.round_exponent%ACCEL_PARAM == 0
+        return next_tick // 2 ** self.round_exponent % ACCEL_PARAM == 0
 
     def determine_new_round_exponent(self):
         changed = False
@@ -81,4 +83,4 @@ class HonestValidator(ValidatorBase):
         return self.round_exponent
 
     def get_prop_msg_size(self):
-        return 15000 * 8  # bits
+        return AVERAGE_PROP_SIZE

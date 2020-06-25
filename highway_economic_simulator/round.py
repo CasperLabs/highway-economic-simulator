@@ -11,7 +11,7 @@ from .message import *
 
 class Round:
     assigned_validators: List["ValidatorBase"]
-    punished_validators: List["ValidatorBase"]  # punished for underestimation
+    # punished_validators: List["ValidatorBase"]  # punished for underestimation
     round_exponents_dict: Dict["Validator", uint64]
     beginning_tick: uint64
     reward_weight: uint64
@@ -22,19 +22,17 @@ class Round:
     ):
         self.beginning_tick = beginning_tick
         self.assigned_validators = assigned_validators
-        self.punished_validators = []
+        # self.punished_validators = []
         self.reward_weight = None
         self.insufficient_weight = False
 
         # Assign a leader randomly, based on weight
 
-        # try:
         self.leader = choice(
             assigned_validators, 1, [v.weight for v in assigned_validators]
         )[0]
-        # except:
-            # import ipdb; ipdb.set_trace()
 
+        self.leader_round_exponent = self.leader.round_exponents[self.beginning_tick]
 
         self.messages = []
 
@@ -46,18 +44,11 @@ class Round:
         ]
         self.last_tick = max(self.round_ends)
 
-
     def get_assigned_weight(self) -> uint64:
         return get_total_weight(self.assigned_validators)
 
     def set_reward_weight(self, reward_weight: uint64):
         self.reward_weight = reward_weight
-
-    def get_round_exponent(self, validator: "Validator") -> uint64:
-        if validator in self.assigned_validators:
-            return self.round_exponents_dict[validator]
-        else:
-            raise Exception("Validator not assigned to round")
 
     def set_otf_status(self, otf_status: bool):
         self.otf_status = otf_status
@@ -112,16 +103,16 @@ class Round:
 
         c0 = set([self.leader])
         for m in conf_messages:
-            if prop_msg in m.justified_messages:
+            if prop_msg in m.cited_messages:
                 relation_matrix[vld_idx[m.sender], vld_idx[prop_msg.sender]] = True
                 c0.add(m.sender)
 
         for m_w in wit_messages:
-            for m_c in m_w.justified_messages:
-                if m_c in conf_messages:
+            for m_c in m_w.cited_messages:
+                if m_c in conf_messages and prop_msg in m_c.cited_messages:
                     relation_matrix[vld_idx[m_w.sender], vld_idx[m_c.sender]] = True
 
-        c1 = set()
+        c1 = set([self.leader])
         for i in range(n_validators):
             for j in range(i + 1, n_validators):
                 if relation_matrix[i, j] and relation_matrix[j, i]:
@@ -129,7 +120,8 @@ class Round:
                     c1.add(self.assigned_validators[j])
 
         # for m in messages:
-        #     print(m, m.justified_messages)
+        #     print(m, m.cited_messages)
+        # print(self.leader, c0, c1)
 
         return c1
 
@@ -139,10 +131,14 @@ class Round:
             # print("Using stored result")
             return self.otf_results[q_OTF]
         else:
-            result = get_total_weight(self.get_level_1_committee(only_in_round_messages=True)) >= q_OTF
+            result = (
+                get_total_weight(
+                    self.get_level_1_committee(only_in_round_messages=True)
+                )
+                >= q_OTF
+            )
 
             if store_result:
                 self.otf_results[q_OTF] = result
 
             return result
-

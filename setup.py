@@ -29,11 +29,7 @@ setup(
     # package_dir={'': 'highway_economic_simulator'},
     packages=find_packages(exclude=["contrib", "docs", "tests"]),
     # packages=find_packages('highway_economic_simulator'),
-    install_requires=[
-        "numpy",
-        "progressbar2",
-        "sortedcontainers",
-    ],
+    install_requires=["numpy", "progressbar2", "sortedcontainers",],
     # extras_require={
     #     'dev': [
     #     ],

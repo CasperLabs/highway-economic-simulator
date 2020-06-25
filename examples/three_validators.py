@@ -6,8 +6,8 @@ np.random.seed(42)
 
 INITIAL_SUPPLY = 1000000000000
 # DURATION = TICKS_PER_ERA
-DURATION = 1000 * 60 * 60 * 24
-INITIAL_ROUND_EXPONENT = 13
+DURATION = 1000 * 60 * 60 * 24 * 3
+INITIAL_ROUND_EXPONENT = 15
 
 # A simple setup of 2 fast 1 slow validators with equal weight
 

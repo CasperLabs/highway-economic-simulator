@@ -1,3 +1,4 @@
+from .constants import *
 from .validator_base import ValidatorBase
 
 
@@ -13,4 +14,4 @@ class SingleSpeedValidator(ValidatorBase):
         return self.constant_round_exponent
 
     def get_prop_msg_size(self):
-        return 15000 * 8  # bits
+        return AVERAGE_PROP_SIZE  # bits
